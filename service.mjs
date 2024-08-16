@@ -11,7 +11,7 @@ Description=${serviceName.charAt(0).toUpperCase() + serviceName.slice(1)}
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/ts-node ${currentDir}/src/start.ts
+ExecStart=/usr/local/bin/node ${currentDir}/server.mjs
 Restart=always
 User=${process.env.USER}
 Environment=NODE_ENV=production
