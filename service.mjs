@@ -1,24 +1,31 @@
 import { writeFileSync } from "fs";
 import { execSync } from "child_process";
+import { join } from "path";
 
-const serviceName = `health_check`;
+const SERVICE_NAME = `health_check`;
+const ENTRY_POINT = `server.mjs`;
+const NODE_TYPE = "node";
+const SYSTEMD_DIR = "/etc/systemd/system";
+
 const currentDir = process.cwd();
-const serviceFilePath = `/etc/systemd/system/${serviceName}.service`;
+const serviceFilePath = join(SYSTEMD_DIR, `${SERVICE_NAME}.service`);
+const nodePath = execSync(`which ${NODE_TYPE}`, { encoding: "utf8" }).trim();
+const execStart = `${nodePath} ${join(currentDir, ENTRY_POINT)}`;
 
 const template = `
 [Unit]
-Description=${serviceName.charAt(0).toUpperCase() + serviceName.slice(1)}
+Description=${SERVICE_NAME.charAt(0).toUpperCase()}${SERVICE_NAME.slice(1)}
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/node ${currentDir}/server.mjs
+ExecStart=${execStart}
 Restart=always
 User=${process.env.USER}
 Environment=NODE_ENV=production
 WorkingDirectory=${currentDir}
 StandardOutput=syslog
 StandardError=syslog
-SyslogIdentifier=${serviceName}
+SyslogIdentifier=${SERVICE_NAME}
 
 [Install]
 WantedBy=multi-user.target
@@ -44,7 +51,7 @@ try {
 
 // Enable the service to start at boot
 try {
-  execSync(`sudo systemctl enable ${serviceName}`);
+  execSync(`sudo systemctl enable ${SERVICE_NAME}`);
   console.log("Service enabled to start at boot");
 } catch (error) {
   console.error(`Failed to enable service: ${error.message}`);
@@ -53,7 +60,7 @@ try {
 
 // Start the service
 try {
-  execSync(`sudo systemctl start ${serviceName}`);
+  execSync(`sudo systemctl start ${SERVICE_NAME}`);
   console.log("Service started");
 } catch (error) {
   console.error(`Failed to start service: ${error.message}`);
